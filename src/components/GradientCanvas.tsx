@@ -58,11 +58,11 @@ export default function GradientCanvas({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = Math.max(1, Math.floor(devicePixelRatio));
+    const dpr = Math.min(3, Math.max(1, devicePixelRatio));
     const drawW = responsive ? size.w : width;
     const drawH = responsive ? size.h : height;
-    canvas.width = Math.floor(drawW * dpr);
-    canvas.height = Math.floor(drawH * dpr);
+    canvas.width = Math.round(drawW * dpr);
+    canvas.height = Math.round(drawH * dpr);
     canvas.style.width = `${drawW}px`;
     canvas.style.height = `${drawH}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

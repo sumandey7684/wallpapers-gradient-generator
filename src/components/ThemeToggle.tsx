@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ThemeSwitcher } from "@/components/kibo-ui/theme-switcher";
 
-function getInitialTheme(): "light" | "dark" {
+function getInitialTheme(): "light" | "dark" | "system" {
   if (typeof window === "undefined") return "dark";
   const saved = localStorage.getItem("theme");
-  if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: light)").matches
-    ? "light"
-    : "dark";
+  if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  return "system";
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
   useEffect(() => {
     setTheme(getInitialTheme());
@@ -20,16 +19,23 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    document.documentElement.setAttribute("data-theme", theme);
+    let applied: "light" | "dark";
+    if (theme === "system") {
+      applied = window.matchMedia("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark";
+    } else {
+      applied = theme;
+    }
+    document.documentElement.setAttribute("data-theme", applied);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   return (
-    <button
-      className="h-9 rounded px-3 border border-foreground/15"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      title="Toggle theme">
-      {theme === "dark" ? "Light" : "Dark"}
-    </button>
+    <ThemeSwitcher
+      value={theme}
+      onChange={(t) => setTheme(t)}
+      defaultValue={getInitialTheme()}
+    />
   );
 }

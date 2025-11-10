@@ -3,6 +3,19 @@
 import { useState } from "react";
 import type { ExportFormat, GradientState } from "@/lib/gradient";
 import { downloadBlob, exportImage } from "@/lib/gradient";
+import { Button } from "@/components/ui/button";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxSeparator,
+  ComboboxTrigger,
+} from "@/components/kibo-ui/combobox";
+import { Label } from "@/components/ui/label";
 
 const PRESETS = [
   { label: "HD 1080p", w: 1920, h: 1080 },
@@ -37,49 +50,109 @@ export default function ExportPanel({ state }: Props) {
     }
   };
 
+  const qualityOptions = [
+    { label: "100%", value: "1" },
+    { label: "95%", value: "0.95" },
+    { label: "90%", value: "0.9" },
+    { label: "80%", value: "0.8" },
+    { label: "70%", value: "0.7" },
+    { label: "60%", value: "0.6" },
+  ];
+
   return (
     <div className="grid gap-3">
       <div className="grid gap-1">
-        <label className="text-sm text-foreground/80">Resolution</label>
-        <select
-          className="h-9 rounded border border-foreground/15 bg-background px-2"
-          value={presetIdx}
-          onChange={(e) => setPresetIdx(Number(e.target.value))}>
-          {PRESETS.map((p, i) => (
-            <option key={i} value={i}>{`${p.label} (${p.w}×${p.h})`}</option>
-          ))}
-        </select>
+        <Label className="text-foreground/80">Resolution</Label>
+        <Combobox
+          data={PRESETS.map((p, i) => ({
+            label: `${p.label} (${p.w}×${p.h})`,
+            value: String(i),
+          }))}
+          type="resolution"
+          value={String(presetIdx)}
+          onValueChange={(v) => setPresetIdx(Number(v))}>
+          <ComboboxTrigger className="w-full" />
+          <ComboboxContent>
+            <ComboboxInput />
+            <ComboboxList>
+              <ComboboxEmpty />
+              <ComboboxGroup>
+                {PRESETS.map((p, i) => (
+                  <ComboboxItem key={i} value={String(i)}>
+                    {p.label} ({p.w}×{p.h})
+                  </ComboboxItem>
+                ))}
+              </ComboboxGroup>
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="grid gap-1">
-          <label className="text-sm text-foreground/80">Format</label>
-          <select
-            className="h-9 rounded border border-foreground/15 bg-background px-2"
+          <Label className="text-foreground/80">Format</Label>
+          <Combobox
+            data={[
+              { label: "PNG", value: "png" },
+              { label: "JPEG", value: "jpeg" },
+              { label: "WEBP", value: "webp" },
+            ]}
+            type="format"
             value={format}
-            onChange={(e) => setFormat(e.target.value as ExportFormat)}>
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WEBP</option>
-          </select>
+            onValueChange={(v) => setFormat(v as ExportFormat)}>
+            <ComboboxTrigger className="w-full" />
+            <ComboboxContent>
+              <ComboboxInput />
+              <ComboboxList>
+                <ComboboxEmpty />
+                <ComboboxGroup>
+                  <ComboboxItem value="png">PNG</ComboboxItem>
+                  <ComboboxItem value="jpeg">JPEG</ComboboxItem>
+                  <ComboboxItem value="webp">WEBP</ComboboxItem>
+                </ComboboxGroup>
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
         </div>
         <div className="grid gap-1">
-          <label className="text-sm text-foreground/80">Quality</label>
-          <input
-            type="range"
-            min={0.1}
-            max={1}
-            step={0.01}
-            value={quality}
-            onChange={(e) => setQuality(Number(e.target.value))}
-          />
+          <Label className="text-foreground/80">
+            Quality
+            <span className="ml-1 text-foreground/50 text-xs">
+              {format === "png"
+                ? "(not applicable)"
+                : `${Math.round(quality * 100)}%`}
+            </span>
+          </Label>
+          <Combobox
+            data={qualityOptions}
+            type="quality"
+            value={String(quality)}
+            onValueChange={(v) => setQuality(Number(v))}
+            open={format === "png" ? false : undefined}>
+            <ComboboxTrigger className="w-full" disabled={format === "png"} />
+            <ComboboxContent>
+              <ComboboxInput />
+              <ComboboxList>
+                <ComboboxEmpty />
+                <ComboboxGroup>
+                  {qualityOptions.map((q) => (
+                    <ComboboxItem key={q.value} value={q.value}>
+                      {q.label}
+                    </ComboboxItem>
+                  ))}
+                </ComboboxGroup>
+                <ComboboxSeparator />
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
         </div>
       </div>
-      <button
-        className="h-10 rounded bg-foreground text-background disabled:opacity-50"
+      <Button
         disabled={busy}
-        onClick={onExport}>
-        {busy ? "Exporting..." : `Export `}
-      </button>
+        onClick={onExport}
+        aria-busy={busy}
+        aria-label={`Export ${w} by ${h} ${format.toUpperCase()}`}>
+        {busy ? "Exporting..." : "Export"}
+      </Button>
     </div>
   );
 }
